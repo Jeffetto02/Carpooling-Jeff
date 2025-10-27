@@ -1,0 +1,55 @@
+// Fix: Create RideHistory.tsx component to show past rides.
+import React from 'react';
+import { Ride, User } from '../types';
+
+interface RideHistoryProps {
+  user: User;
+  rides: Ride[];
+  onRateRide: (ride: Ride) => void;
+}
+
+const RideHistory: React.FC<RideHistoryProps> = ({ user, rides, onRateRide }) => {
+  const completedRides = rides.filter(ride => ride.status === 'completed');
+  
+  return (
+    <div className="space-y-8">
+      <div className="text-center">
+          <h1 className="text-4xl font-bold text-dark">Your Ride History</h1>
+          <p className="text-lg text-gray-400 mt-2">Review your past trips on EcoRide.</p>
+      </div>
+      <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 rounded-xl shadow-lg overflow-hidden">
+        <div className="divide-y divide-slate-700">
+          {completedRides.length > 0 ? (
+            completedRides.map(ride => (
+              <div key={ride.id} className="p-4 md:p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="flex-grow">
+                  <p className="font-bold text-dark text-lg">{ride.destination}</p>
+                  <p className="text-sm text-gray-400">From: {ride.origin}</p>
+                  <p className="text-xs text-gray-500 mt-1">
+                    On {ride.departureTime.toLocaleDateString()} with {ride.driver.id === user.id ? 'your passengers' : ride.driver.name}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 w-full md:w-auto">
+                  <div className="text-right flex-grow">
+                      <p className="font-semibold text-lg text-primary">{user.isDriver ? '+' : '-'} Ksh {ride.fare}</p>
+                      <p className="text-xs text-gray-400">{user.isDriver ? 'Earned' : 'Paid'}</p>
+                  </div>
+                  <button
+                    onClick={() => onRateRide(ride)}
+                    className="bg-secondary text-white font-bold py-2 px-4 rounded-lg hover:bg-secondary-dark transition-colors duration-300 text-sm whitespace-nowrap"
+                  >
+                    Rate Trip
+                  </button>
+                </div>
+              </div>
+            ))
+          ) : (
+            <p className="p-8 text-center text-gray-400">Your completed rides will appear here.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default RideHistory;

@@ -1,0 +1,7 @@
+{
+  "name": "EcoRide - Carpooling App",
+  "description": "A modern carpooling application that connects drivers with empty seats to riders heading in the same direction. Save money, reduce traffic, and contribute to a greener environment by sharing rides.",
+  "requestFramePermissions": [
+    "geolocation"
+  ]
+}

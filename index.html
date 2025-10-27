@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>EcoRide - Carpooling App</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: '#005f73', // Dark Sea Blue
+            'primary-dark': '#004c5c',
+            secondary: '#F59E0B', // Amber 500
+            'secondary-dark': '#D97706', // Amber 600
+            light: '#F3F4F6', // Gray 100
+            dark: '#E5E7EB' // Gray 200 (for text on dark bg)
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          },
+        }
+      }
+    }
+    </script>
+    <link rel="stylesheet" href="https://rsms.me/inter/inter.css">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🚗</text></svg>">
+<script type="importmap">
+{
+  "imports": {
+    "react/": "https://aistudiocdn.com/react@^19.2.0/",
+    "react": "https://aistudiocdn.com/react@^19.2.0",
+    "react-dom/": "https://aistudiocdn.com/react-dom@^19.2.0/"
+  }
+}
+</script>
+<style>
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-image: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800"><path fill="%23005f73" fill-opacity="0.1" d="M0 400 Q 100 350, 200 400 T 400 400 T 600 400 T 800 400 V 800 H 0 Z"></path><path fill="%23005f73" fill-opacity="0.1" d="M0 500 Q 100 450, 200 500 T 400 500 T 600 500 T 800 500 V 800 H 0 Z"></path></svg>');
+    background-size: cover;
+    opacity: 0.1;
+    z-index: -1;
+    pointer-events: none;
+    animation: wave 20s infinite linear;
+  }
+  @keyframes wave {
+    0% { background-position: 0px 0px; }
+    100% { background-position: 800px 0px; }
+  }
+</style>
+</head>
+<body class="bg-slate-900 font-sans bg-gradient-to-br from-gray-900 to-slate-800">
+    <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
+</body>
+</html>
