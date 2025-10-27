@@ -8,7 +8,7 @@ interface LiveRideTrackerProps {
 }
 
 const LiveRideTracker: React.FC<LiveRideTrackerProps> = ({ ride, onBack }) => {
-  const { driver, destination, eta, car } = ride;
+  const { driver, destination, eta } = ride;
   
   const formatETA = (etaDate?: Date) => {
     if (!etaDate) return 'Calculating...';
@@ -50,7 +50,8 @@ const LiveRideTracker: React.FC<LiveRideTrackerProps> = ({ ride, onBack }) => {
                     {driver.car && (
                          <div className="mt-4 text-sm text-gray-400 bg-slate-700/50 p-3 rounded-lg">
                             <p><strong>Vehicle:</strong> {driver.car.model} ({driver.car.type})</p>
-                            <div className="flex items-center gap-2">
+                            <p><strong>Number Plate:</strong> <span className="font-mono bg-slate-800 px-2 py-1 rounded">{driver.car.numberPlate}</span></p>
+                            <div className="flex items-center gap-2 mt-1">
                                 <strong>Color:</strong>
                                 <span className="w-4 h-4 rounded-full inline-block border border-slate-500" style={{ backgroundColor: driver.car.color }}></span>
                             </div>

@@ -1,30 +1,42 @@
 // Fix: Create RatingModal.tsx component for rating rides.
-import React, { useState } from 'react';
-import { Ride } from '../types';
+import React, { useState, useEffect } from 'react';
+import { Ride, User } from '../types';
 
-interface RatingModalProps {
-  ride: Ride | null;
-  onClose: () => void;
-  onSubmit: (rideId: string, rating: number, comment: string) => void;
+interface RatingTask {
+    ride: Ride;
+    ratee: User;
 }
 
-const RatingModal: React.FC<RatingModalProps> = ({ ride, onClose, onSubmit }) => {
+interface RatingModalProps {
+  task: RatingTask | null;
+  onClose: () => void;
+  onSubmit: (task: RatingTask, rating: number, comment: string) => void;
+}
+
+const RatingModal: React.FC<RatingModalProps> = ({ task, onClose, onSubmit }) => {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
-  if (!ride) return null;
+  useEffect(() => {
+    if (task) {
+        setRating(5);
+        setComment('');
+    }
+  }, [task]);
+
+  if (!task) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(ride.id, rating, comment);
+    onSubmit(task, rating, comment);
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 backdrop-blur-sm">
       <div className="bg-slate-800 border border-slate-700 rounded-xl shadow-2xl p-8 max-w-md w-full relative">
         <button onClick={onClose} className="absolute top-4 right-4 text-gray-400 hover:text-white">&times;</button>
-        <h2 className="text-2xl font-bold text-dark mb-4">Rate Your Trip</h2>
-        <p className="text-gray-400 mb-6">How was your ride to <span className="font-semibold text-primary">{ride.destination}</span>?</p>
+        <h2 className="text-2xl font-bold text-dark mb-4">Rate Your Experience</h2>
+        <p className="text-gray-400 mb-6">How was your interaction with <span className="font-semibold text-primary">{task.ratee.name}</span> on the ride to <span className="font-semibold text-primary">{task.ride.destination}</span>?</p>
         <form onSubmit={handleSubmit}>
           <div className="mb-6">
             <label className="block text-sm font-medium text-gray-300 mb-2">Rating</label>

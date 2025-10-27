@@ -1,19 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { Ride } from '../types';
+import { Ride, User } from '../types';
 import RideManagementCard from './RideManagementCard';
 import { MOCK_DESTINATIONS, MOCK_RECENT_DESTINATIONS, Icons } from '../constants';
 
 interface DriverDashboardProps {
-  onCreateRide: (rideData: Omit<Ride, 'id' | 'driver' | 'currentLocation' | 'route' | 'riders' | 'status' | 'rideType'>) => void;
+  driver: User;
+  onCreateRide: (rideData: Omit<Ride, 'id' | 'driver' | 'currentLocation' | 'route' | 'riders' | 'status' | 'rideType' | 'pendingRequests' | 'shareCode'>) => void;
   onStartInstantDrive: (destination: string) => void;
   driverRides: Ride[];
   onCancelRide: (rideId: string) => void;
   onEndRide: (rideId: string) => void;
   onExtendDepartureTime: (rideId: string, newTime: Date) => void;
   onNotifyPassengers: (rideId: string) => void;
+  onApproveRequest: (rideId: string, riderId: string) => void;
+  onRejectRequest: (rideId: string, riderId: string) => void;
 }
 
-const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStartInstantDrive, driverRides, onCancelRide, onEndRide, onExtendDepartureTime, onNotifyPassengers }) => {
+const WEEK_DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const DriverDashboard: React.FC<DriverDashboardProps> = ({ driver, onCreateRide, onStartInstantDrive, driverRides, onCancelRide, onEndRide, onExtendDepartureTime, onNotifyPassengers, onApproveRequest, onRejectRequest }) => {
   const [destination, setDestination] = useState('');
   const [origin, setOrigin] = useState('');
   const [departureTime, setDepartureTime] = useState('');
@@ -21,6 +26,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStart
   const [fare, setFare] = useState(300);
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [instantDestination, setInstantDestination] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurringDays, setRecurringDays] = useState<string[]>([]);
 
   useEffect(() => {
     if (destination.length > 2) {
@@ -32,6 +39,10 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStart
       setSuggestions([]);
     }
   }, [destination]);
+
+  const handleToggleRecurringDay = (day: string) => {
+    setRecurringDays(prev => prev.includes(day) ? prev.filter(d => d !== day) : [...prev, day]);
+  }
 
   const handleScheduleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,6 +57,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStart
       availableSeats: seats,
       totalSeats: seats,
       fare,
+      isRecurring,
+      recurringDays: isRecurring ? recurringDays : []
     });
     // Reset form
     setDestination('');
@@ -53,6 +66,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStart
     setDepartureTime('');
     setSeats(1);
     setFare(300);
+    setIsRecurring(false);
+    setRecurringDays([]);
   };
 
   const handleInstantSubmit = (e: React.FormEvent) => {
@@ -79,6 +94,8 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStart
                 onEndRide={onEndRide}
                 onExtendDepartureTime={onExtendDepartureTime}
                 onNotifyPassengers={onNotifyPassengers}
+                onApproveRequest={onApproveRequest}
+                onRejectRequest={onRejectRequest}
               />
             ))}
           </div>
@@ -122,6 +139,23 @@ const DriverDashboard: React.FC<DriverDashboardProps> = ({ onCreateRide, onStart
             <div>
               <label htmlFor="departure" className="block text-sm font-medium text-gray-300">Departure Time</label>
               <input type="datetime-local" id="departure" value={departureTime} onChange={(e) => setDepartureTime(e.target.value)} className="mt-1 block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" required />
+            </div>
+            {/* Recurring Ride Section */}
+            <div className="border-t border-slate-700 pt-4">
+                 <div className="flex items-center justify-between">
+                    <label htmlFor="recurring" className="font-medium text-gray-300">Recurring Ride?</label>
+                    <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"/>
+                 </div>
+                 {isRecurring && (
+                    <div className="mt-3">
+                        <label className="block text-sm font-medium text-gray-400 mb-2">Repeat on:</label>
+                        <div className="flex justify-between gap-1">
+                            {WEEK_DAYS.map(day => (
+                                <button key={day} type="button" onClick={() => handleToggleRecurringDay(day)} className={`w-10 h-10 rounded-full text-sm font-bold transition-colors ${recurringDays.includes(day) ? 'bg-primary text-white' : 'bg-slate-700 text-gray-300 hover:bg-slate-600'}`}>{day}</button>
+                            ))}
+                        </div>
+                    </div>
+                 )}
             </div>
             <div>
               <label htmlFor="seats" className="block text-sm font-medium text-gray-300">Available Seats</label>

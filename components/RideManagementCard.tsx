@@ -7,9 +7,11 @@ interface RideManagementCardProps {
   onEndRide: (rideId: string) => void;
   onExtendDepartureTime: (rideId: string, newTime: Date) => void;
   onNotifyPassengers: (rideId: string) => void;
+  onApproveRequest: (rideId: string, riderId: string) => void;
+  onRejectRequest: (rideId: string, riderId: string) => void;
 }
 
-const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelRide, onEndRide, onExtendDepartureTime, onNotifyPassengers }) => {
+const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelRide, onEndRide, onExtendDepartureTime, onNotifyPassengers, onApproveRequest, onRejectRequest }) => {
     // Helper to format date for datetime-local input, which requires 'YYYY-MM-DDTHH:mm'
     const toISOStringWithTimezone = (date: Date) => {
         const tzoffset = (new Date()).getTimezoneOffset() * 60000; //offset in milliseconds
@@ -22,6 +24,13 @@ const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelR
     const handleTimeUpdate = () => {
         if (newDepartureTime) {
             onExtendDepartureTime(ride.id, new Date(newDepartureTime));
+        }
+    }
+    
+    const handleShare = () => {
+        if(ride.shareCode) {
+            navigator.clipboard.writeText(ride.shareCode);
+            alert(`Ride code "${ride.shareCode}" copied to clipboard! Share it with potential riders.`);
         }
     }
 
@@ -43,6 +52,7 @@ const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelR
                                 In Progress
                              </span>
                         )}
+                        {ride.isRecurring && <span className="text-xs font-bold text-cyan-400 bg-cyan-900/50 px-2 py-0.5 rounded-full">RECURRING</span>}
                     </div>
                     <p className="text-gray-400">From: {ride.origin}</p>
                 </div>
@@ -52,9 +62,33 @@ const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelR
                 </div>
             </div>
 
+            {/* Pending Requests */}
+            {ride.pendingRequests.length > 0 && (
+                <div className="mb-6">
+                    <h4 className="font-bold text-yellow-400 mb-2 border-t border-slate-700 pt-4">Pending Requests ({ride.pendingRequests.length})</h4>
+                    <ul className="space-y-2 max-h-40 overflow-y-auto pr-2">
+                       {ride.pendingRequests.map(rider => (
+                           <li key={rider.id} className="bg-slate-700/50 p-3 rounded-lg flex items-center justify-between">
+                               <div className="flex items-center">
+                                   <img src={rider.avatar} alt={rider.name} className="w-8 h-8 rounded-full mr-3"/>
+                                   <div>
+                                       <span className="font-medium">{rider.name}</span>
+                                       <p className="text-xs text-gray-400">Rating: {rider.rating.toFixed(1)} ★</p>
+                                   </div>
+                               </div>
+                               <div className="flex gap-2">
+                                   <button onClick={() => onApproveRequest(ride.id, rider.id)} className="px-3 py-1 text-sm bg-green-600 rounded hover:bg-green-700">Approve</button>
+                                   <button onClick={() => onRejectRequest(ride.id, rider.id)} className="px-3 py-1 text-sm bg-red-600 rounded hover:bg-red-700">Reject</button>
+                               </div>
+                           </li>
+                       ))}
+                    </ul>
+                </div>
+            )}
+            
             {/* Passenger List */}
             <div className="mb-6">
-                <h4 className="font-bold text-dark mb-2 border-t border-slate-700 pt-4">Booked Passengers ({ride.riders.length}/{ride.totalSeats})</h4>
+                <h4 className="font-bold text-dark mb-2 border-t border-slate-700 pt-4">Approved Passengers ({ride.riders.length}/{ride.totalSeats})</h4>
                 {ride.riders.length > 0 ? (
                     <ul className="space-y-2 max-h-40 overflow-y-auto pr-2">
                        {ride.riders.map(rider => (
@@ -68,7 +102,7 @@ const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelR
                        ))}
                     </ul>
                 ) : (
-                    <p className="text-gray-500 text-sm">No passengers have booked yet.</p>
+                    <p className="text-gray-500 text-sm">No passengers have been approved yet.</p>
                 )}
             </div>
 
@@ -81,26 +115,30 @@ const RideManagementCard: React.FC<RideManagementCardProps> = ({ ride, onCancelR
                         </button>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
-                    {/* Time Extension */}
-                    <div>
-                        <label className="block text-sm font-medium text-gray-300 mb-1">Update Departure Time</label>
+                    <div className="space-y-4">
                         <div className="flex gap-2">
-                            <input 
-                                type="datetime-local" 
-                                value={newDepartureTime}
-                                onChange={e => setNewDepartureTime(e.target.value)}
-                                className="block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
-                            />
-                            <button onClick={handleTimeUpdate} className="bg-secondary text-white font-bold py-2 px-4 rounded-lg hover:bg-secondary-dark transition-colors">Update</button>
+                            <input type="text" readOnly value={ride.shareCode || 'N/A'} className="flex-grow px-3 py-2 bg-slate-900 text-gray-400 font-mono text-sm border border-slate-600 rounded-md"/>
+                            <button onClick={handleShare} className="bg-secondary text-white font-bold py-2 px-4 rounded-lg hover:bg-secondary-dark transition-colors">Share</button>
                         </div>
-                        <p className="text-xs text-gray-500 mt-1">Current: {ride.departureTime.toLocaleString()}</p>
-                    </div>
-                    {/* Main actions */}
-                    <div className="flex flex-col sm:flex-row gap-4">
-                        <button onClick={() => onNotifyPassengers(ride.id)} className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-dark transition-colors">Start Ride</button>
-                        <button onClick={() => onCancelRide(ride.id)} className="w-full bg-red-600/80 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 transition-colors">Cancel Ride</button>
-                    </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-end">
+                            <div>
+                                <label className="block text-sm font-medium text-gray-300 mb-1">Update Departure Time</label>
+                                <div className="flex gap-2">
+                                    <input 
+                                        type="datetime-local" 
+                                        value={newDepartureTime}
+                                        onChange={e => setNewDepartureTime(e.target.value)}
+                                        className="block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary"
+                                    />
+                                    <button onClick={handleTimeUpdate} className="bg-secondary text-white font-bold py-2 px-4 rounded-lg hover:bg-secondary-dark transition-colors">Set</button>
+                                </div>
+                                <p className="text-xs text-gray-500 mt-1">Current: {ride.departureTime.toLocaleString()}</p>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-4">
+                                <button onClick={() => onNotifyPassengers(ride.id)} className="w-full bg-primary text-white font-bold py-3 px-4 rounded-lg hover:bg-primary-dark transition-colors">Start Ride</button>
+                                <button onClick={() => onCancelRide(ride.id)} className="w-full bg-red-600/80 text-white font-bold py-3 px-4 rounded-lg hover:bg-red-700 transition-colors">Cancel Ride</button>
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>

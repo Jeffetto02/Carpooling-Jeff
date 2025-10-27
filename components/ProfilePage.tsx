@@ -1,15 +1,30 @@
 // Fix: Create ProfilePage.tsx component to display user profiles.
 import React, { useState, useEffect } from 'react';
-import { User, Ride, Car } from '../types';
+import { User, Ride, Car, Badge } from '../types';
+import { Icons } from '../constants';
 
 interface ProfilePageProps {
   user: User;
+  allRides: Ride[];
   onBack: () => void;
   isCurrentUser: boolean;
   onUpdateProfile: (updatedDetails: Partial<User>) => void;
 }
 
-const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, onUpdateProfile }) => {
+const BadgeDisplay: React.FC<{badge: Badge}> = ({ badge }) => {
+    let bgColor = 'bg-gray-600';
+    if(badge === '10+ Rides') bgColor = 'bg-green-600';
+    if(badge === '50+ Rides') bgColor = 'bg-blue-600';
+    if(badge === 'Top Rated') bgColor = 'bg-yellow-500';
+
+    return (
+        <span className={`text-xs font-bold mr-2 px-2.5 py-0.5 rounded-full text-white ${bgColor}`}>
+            {badge}
+        </span>
+    )
+}
+
+const ProfilePage: React.FC<ProfilePageProps> = ({ user, allRides, onBack, isCurrentUser, onUpdateProfile }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
       name: user.name,
@@ -17,6 +32,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, 
       carModel: user.car?.model || '',
       carType: user.car?.type || '',
       carColor: user.car?.color || '#ffffff',
+      numberPlate: user.car?.numberPlate || '',
       kraPin: user.kraPin || ''
   });
 
@@ -27,6 +43,7 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, 
       carModel: user.car?.model || '',
       carType: user.car?.type || '',
       carColor: user.car?.color || '#ffffff',
+      numberPlate: user.car?.numberPlate || '',
       kraPin: user.kraPin || ''
     });
   }, [user, isEditing]);
@@ -45,12 +62,15 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, 
         updatedDetails.car = {
             model: formData.carModel,
             type: formData.carType,
-            color: formData.carColor
+            color: formData.carColor,
+            numberPlate: formData.numberPlate
         };
     }
     onUpdateProfile(updatedDetails);
     setIsEditing(false);
   };
+  
+  const completedRidesCount = user.isDriver ? allRides.filter(r => r.driver.id === user.id && r.status === 'completed').length : 0;
 
   const renderViewMode = () => (
     <>
@@ -58,16 +78,21 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, 
         <img src={user.avatar} alt={user.name} className="w-32 h-32 rounded-full border-4 border-primary" />
         <div className="flex-grow">
           <h1 className="text-4xl font-bold text-dark">{user.name}</h1>
-          <p className="text-xl text-gray-300 mt-1">{user.isDriver ? 'Verified Driver' : 'Rider'}</p>
+          <p className="text-xl text-gray-300 mt-1">{user.isDriver ? `Verified Driver (${completedRidesCount} rides)` : 'Rider'}</p>
           <div className="flex items-center text-yellow-400 text-lg mt-2">
             {'★'.repeat(Math.round(user.rating))}
             {'☆'.repeat(5 - Math.round(user.rating))}
             <span className="text-gray-400 text-sm ml-2">({user.rating.toFixed(1)})</span>
           </div>
+          {user.badges && user.badges.length > 0 && (
+            <div className="mt-2">
+                {user.badges.map(b => <BadgeDisplay key={b} badge={b} />)}
+            </div>
+          )}
           {user.phoneNumber && <p className="text-sm text-gray-400 mt-2">Contact: {user.phoneNumber}</p>}
           {user.isDriver && user.car && (
             <div className="mt-4 text-sm text-gray-400 bg-slate-700/50 p-3 rounded-lg">
-                <p><strong>Vehicle:</strong> {user.car.model} ({user.car.type})</p>
+                <p><strong>Vehicle:</strong> {user.car.model} ({user.car.type}) - <strong className="font-mono">{user.car.numberPlate}</strong></p>
                 <div className="flex items-center gap-2">
                     <strong>Color:</strong>
                     <span className="w-4 h-4 rounded-full inline-block border border-slate-500" style={{ backgroundColor: user.car.color }}></span>
@@ -112,7 +137,11 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, 
                             <label htmlFor="carType" className="block text-sm font-medium text-gray-300">Car Type</label>
                             <input type="text" id="carType" name="carType" value={formData.carType} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
                         </div>
-                        <div className="md:col-span-2">
+                        <div>
+                            <label htmlFor="numberPlate" className="block text-sm font-medium text-gray-300">Number Plate</label>
+                            <input type="text" id="numberPlate" name="numberPlate" value={formData.numberPlate} onChange={handleChange} className="mt-1 block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" />
+                        </div>
+                        <div>
                             <label htmlFor="carColor" className="block text-sm font-medium text-gray-300">Car Color</label>
                             <div className="flex items-center gap-4 mt-1">
                                 <input type="color" id="carColor" name="carColor" value={formData.carColor} onChange={handleChange} className="w-12 h-10 p-1 bg-slate-700 border border-slate-600 rounded-md cursor-pointer"/>
@@ -144,6 +173,23 @@ const ProfilePage: React.FC<ProfilePageProps> = ({ user, onBack, isCurrentUser, 
       <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 p-8 rounded-xl shadow-lg">
           {isEditing && isCurrentUser ? renderEditMode() : renderViewMode()}
       </div>
+      
+      {isCurrentUser && (
+        <>
+            <div className="mt-12">
+                <h2 className="text-2xl font-bold text-dark mb-4">Your Saved Locations</h2>
+                <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 p-8 rounded-xl shadow-lg text-gray-400">
+                    {user.savedLocations?.length ? user.savedLocations.map(l => <p key={l.name}><strong>{l.name}:</strong> {l.address}</p>) : <p>You have no saved locations.</p>}
+                </div>
+            </div>
+            <div className="mt-12">
+                <h2 className="text-2xl font-bold text-dark mb-4">Your Favorite Drivers</h2>
+                <div className="bg-slate-800/50 backdrop-blur-lg border border-slate-700 p-8 rounded-xl shadow-lg text-gray-400">
+                    {user.favoriteDrivers?.length ? user.favoriteDrivers.map(id => <p key={id}>{id}</p>) : <p>You have no favorite drivers yet.</p>}
+                </div>
+            </div>
+        </>
+      )}
 
       <div className="mt-12">
         <h2 className="text-2xl font-bold text-dark mb-4">Recent Reviews</h2>

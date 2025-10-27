@@ -10,20 +10,21 @@ const DriverOnboarding: React.FC<DriverOnboardingProps> = ({ onOnboardingComplet
   const [model, setModel] = useState('');
   const [type, setType] = useState('');
   const [color, setColor] = useState('#ffffff');
+  const [numberPlate, setNumberPlate] = useState('');
   const [kraPin, setKraPin] = useState('');
   const [isVerifying, setIsVerifying] = useState(false);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!model || !type) {
-      alert('Please fill in your car model and type.');
+    if (!model || !type || !numberPlate) {
+      alert('Please fill in your car model, type, and number plate.');
       return;
     }
     
     setIsVerifying(true);
     // Simulate API call for verification
     setTimeout(() => {
-        onOnboardingComplete({ carDetails: { model, type, color }, kraPin });
+        onOnboardingComplete({ carDetails: { model, type, color, numberPlate }, kraPin });
         setIsVerifying(false);
     }, 2000);
   };
@@ -47,7 +48,11 @@ const DriverOnboarding: React.FC<DriverOnboardingProps> = ({ onOnboardingComplet
                             <label htmlFor="type" className="block text-sm font-medium text-gray-300">Car Type</label>
                             <input type="text" id="type" value={type} onChange={(e) => setType(e.target.value)} placeholder="e.g., Sedan" className="mt-1 block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" required />
                         </div>
-                         <div className="md:col-span-2">
+                        <div>
+                            <label htmlFor="numberPlate" className="block text-sm font-medium text-gray-300">Number Plate</label>
+                            <input type="text" id="numberPlate" value={numberPlate} onChange={(e) => setNumberPlate(e.target.value.toUpperCase())} placeholder="e.g., KDA 123B" className="mt-1 block w-full px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md shadow-sm focus:outline-none focus:ring-primary focus:border-primary" required />
+                        </div>
+                         <div>
                             <label htmlFor="color" className="block text-sm font-medium text-gray-300">Car Color</label>
                             <div className="flex items-center gap-4 mt-1">
                                 <input type="color" id="color" value={color} onChange={(e) => setColor(e.target.value)} className="w-12 h-10 p-1 bg-slate-700 border border-slate-600 rounded-md cursor-pointer"/>

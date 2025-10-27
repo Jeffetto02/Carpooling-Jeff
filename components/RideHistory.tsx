@@ -63,12 +63,14 @@ const RideHistory: React.FC<RideHistoryProps> = ({ user, rides, onRateRide }) =>
                       <p className="font-semibold text-lg text-primary">{user.isDriver ? '+' : '-'} Ksh {ride.fare}</p>
                       <p className="text-xs text-gray-400">{user.isDriver ? 'Earned' : 'Paid'}</p>
                   </div>
-                  <button
-                    onClick={() => onRateRide(ride)}
-                    className="bg-secondary text-white font-bold py-2 px-4 rounded-lg hover:bg-secondary-dark transition-colors duration-300 text-sm whitespace-nowrap"
-                  >
-                    Rate Trip
-                  </button>
+                  {!user.isDriver && (
+                    <button
+                        onClick={() => onRateRide(ride)}
+                        className="bg-secondary text-white font-bold py-2 px-4 rounded-lg hover:bg-secondary-dark transition-colors duration-300 text-sm whitespace-nowrap"
+                    >
+                        Rate Driver
+                    </button>
+                  )}
                 </div>
               </div>
             )})

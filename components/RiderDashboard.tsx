@@ -7,16 +7,17 @@ import MapView from './MapView'; // Import the new MapView component
 interface RiderDashboardProps {
   user: User;
   availableRides: Ride[];
-  onBookSeat: (rideId: string) => void;
+  onRequestSeat: (rideId: string) => void;
   onShowProfile: (userId: string) => void;
   onTrackRide: (rideId: string) => void;
 }
 
 type ViewMode = 'list' | 'map';
 
-const RiderDashboard: React.FC<RiderDashboardProps> = ({ user, availableRides, onBookSeat, onShowProfile, onTrackRide }) => {
+const RiderDashboard: React.FC<RiderDashboardProps> = ({ user, availableRides, onRequestSeat, onShowProfile, onTrackRide }) => {
   const [searchOrigin, setSearchOrigin] = useState('');
   const [searchDestination, setSearchDestination] = useState('');
+  const [rideCode, setRideCode] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [viewMode, setViewMode] = useState<ViewMode>('list');
 
@@ -46,7 +47,7 @@ const RiderDashboard: React.FC<RiderDashboardProps> = ({ user, availableRides, o
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
     return R * c; // Distance in km
   };
-
+  
   const ridesWithDistance = availableRides.map(ride => {
     let distance;
     const startCoords = ride.status === 'in-progress' && ride.currentLocation ? ride.currentLocation : ride.originCoords;
@@ -62,21 +63,21 @@ const RiderDashboard: React.FC<RiderDashboardProps> = ({ user, availableRides, o
 
   const filteredScheduledRides = scheduledRides.filter(ride =>
     ride.origin.toLowerCase().includes(searchOrigin.toLowerCase()) &&
-    ride.destination.toLowerCase().includes(searchDestination.toLowerCase())
+    ride.destination.toLowerCase().includes(searchDestination.toLowerCase()) &&
+    (rideCode ? ride.shareCode?.toLowerCase() === rideCode.toLowerCase() : true)
   );
   
-  // Fix: Correctly type the `rides` parameter to include the optional `distance` property.
   const renderRideList = (rides: (Ride & { distance?: number })[], isYourTrip: boolean = false) => (
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {rides.map(ride => (
               <RideCard 
                   key={ride.id} 
                   ride={ride} 
-                  onBookSeat={onBookSeat} 
+                  currentUser={user}
+                  onRequestSeat={onRequestSeat} 
                   onShowProfile={onShowProfile}
                   onTrackRide={onTrackRide}
                   distance={ride.distance}
-                  isBooked={isYourTrip}
               />
           ))}
       </div>
@@ -107,9 +108,24 @@ const RiderDashboard: React.FC<RiderDashboardProps> = ({ user, availableRides, o
                     <button onClick={() => setViewMode('map')} className={`px-4 py-1 text-sm rounded-md transition-colors ${viewMode === 'map' ? 'bg-primary text-white' : 'text-gray-300 hover:bg-slate-700'}`}>Map</button>
                 </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <input type="text" placeholder="Search by origin..." value={searchOrigin} onChange={(e) => setSearchOrigin(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md focus:outline-none focus:ring-primary focus:border-primary"/>
-            <input type="text" placeholder="Search by destination..." value={searchDestination} onChange={(e) => setSearchDestination(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md focus:outline-none focus:ring-primary focus:border-primary"/>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+                <input type="text" placeholder="Search by origin..." value={searchOrigin} onChange={(e) => setSearchOrigin(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md focus:outline-none focus:ring-primary focus:border-primary"/>
+                <input type="text" placeholder="Search by destination..." value={searchDestination} onChange={(e) => setSearchDestination(e.target.value)} className="px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md focus:outline-none focus:ring-primary focus:border-primary"/>
+            </div>
+             {user.savedLocations && user.savedLocations.length > 0 && (
+                <div className="flex items-center gap-2 mb-6">
+                    <span className="text-sm text-gray-400">Quick search:</span>
+                    {user.savedLocations.map(loc => (
+                        <button key={loc.name} onClick={() => setSearchOrigin(loc.address)} className="px-3 py-1 bg-slate-700 text-sm rounded-full hover:bg-primary">{loc.name}</button>
+                    ))}
+                </div>
+             )}
+            <div>
+                 <label className="block text-sm font-medium text-gray-300 mb-1">Have a Ride Code?</label>
+                 <div className="flex gap-2">
+                    <input type="text" placeholder="e.g., ABC-123" value={rideCode} onChange={(e) => setRideCode(e.target.value)} className="flex-grow px-3 py-2 bg-slate-700 text-white border border-slate-600 rounded-md focus:outline-none focus:ring-primary focus:border-primary" />
+                    <button onClick={() => setRideCode('')} className="px-4 py-2 bg-slate-600 rounded-md text-sm hover:bg-slate-500">Clear</button>
+                 </div>
             </div>
         </div>
         
